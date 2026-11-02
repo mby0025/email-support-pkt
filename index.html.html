@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<!-- PKT Assessment | Version: Pass/Fail 80% + live Google Sheet, 25 questions x 2 points | Updated: 02 Nov 2026 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PKT Assessment Tool</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Segoe UI,Tahoma,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:20px}
+.container{max-width:1000px;margin:auto;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.2);overflow:hidden}
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:28px;text-align:center}
+.header h1{margin-bottom:8px}
+.content{padding:30px}
+.login-box{max-width:420px;margin:20px auto;padding:25px;background:#f8f9fa;border-radius:10px}
+.form-group{margin-bottom:18px}
+label{display:block;margin-bottom:7px;font-weight:600;color:#444}
+input,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+input:focus,select:focus,button:focus-visible{outline:2px solid #667eea;outline-offset:2px}
+button{padding:12px 24px;border:0;border-radius:6px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.btn-primary{background:#667eea;color:#fff}
+.btn-secondary{background:#eee;color:#333}
+.btn-success{background:#28a745;color:#fff}
+.error{color:#b00020;margin-top:12px;display:none}
+.app{display:none}
+.role-switch{display:flex;gap:8px;margin-bottom:20px;background:#e9ebf5;padding:4px;border-radius:8px}
+.role-switch button{flex:1;background:transparent;color:#555;padding:10px}
+.role-switch button.active{background:#fff;color:#667eea;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.question{background:#f8f9fa;padding:20px;border-left:4px solid #667eea;border-radius:8px;margin-bottom:18px}
+.qnum{font-weight:700;color:#667eea;margin-bottom:8px}
+.qtext{font-weight:600;color:#222;margin-bottom:14px}
+.option{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-weight:400;cursor:pointer}
+.option input{width:auto;margin-top:3px}
+.progress{height:8px;background:#e5e5e5;border-radius:4px;margin-bottom:20px;overflow:hidden}
+.fill{height:100%;width:0;background:#667eea;transition:.2s}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.result{display:none;margin-top:10px;padding:30px;background:#f8f9fa;border-radius:10px;text-align:center}
+.score{font-size:44px;font-weight:800;text-align:center;color:#667eea;margin-top:10px}
+.review{padding:15px;background:#fff;border-radius:7px;margin:16px 0 0;border-left:4px solid #28a745;text-align:left}
+.answer-review{margin-top:26px;text-align:left}
+.answer-review h3{margin-bottom:6px;text-align:center}
+.qa{padding:15px;background:#fff;border-radius:7px;margin:12px 0 0;border-left:4px solid #ccc;text-align:left;line-height:1.6}
+.qa.correct{border-left-color:#28a745}
+.qa.wrong{border-left-color:#dc3545}
+.qa .yours.wrong-text{color:#b00020;font-weight:600}
+.qa .yours.right-text{color:#16803c;font-weight:600}
+.qa .key{color:#16803c;font-weight:700}
+.badge-ok{color:#16803c;font-weight:700}
+.badge-no{color:#b00020;font-weight:700}
+.locked{padding:30px;background:#fff3cd;border-radius:10px;color:#664d03;text-align:center}
+.locked h2{margin-bottom:8px}
+.statusbox{padding:22px;background:#eef0fb;border-radius:10px;color:#3d4a99;text-align:center}
+.statusbox button{margin-top:12px}
+.notice{background:#eef0fb;padding:12px;border-radius:6px;margin-bottom:18px;color:#3d4a99;font-size:14px}
+.warn{background:#fdecea;padding:12px;border-radius:6px;margin-bottom:18px;color:#8a1c12;font-size:14px;display:none}
+.admin-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:6px}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+.live{display:flex;align-items:center;gap:8px;font-size:13px;color:#666;margin-top:6px}
+.dot{width:9px;height:9px;border-radius:50%;background:#aaa;flex:none}
+.dot.ok{background:#28a745;animation:pulse 2s infinite}
+.dot.error{background:#dc3545}
+.dot.loading{background:#f0ad4e}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(40,167,69,.5)}70%{box-shadow:0 0 0 8px rgba(40,167,69,0)}100%{box-shadow:0 0 0 0 rgba(40,167,69,0)}}
+@media(prefers-reduced-motion:reduce){.dot.ok{animation:none}}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.stat{flex:1;min-width:140px;background:#f8f9fa;border-radius:8px;padding:14px;border-left:4px solid #667eea}
+.stat b{display:block;font-size:24px;color:#667eea}
+.stat.pass{border-left-color:#28a745}.stat.pass b{color:#16803c}
+.stat.fail{border-left-color:#dc3545}.stat.fail b{color:#b00020}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:13px;font-weight:700}
+.pill.pass{background:#e3f6e8;color:#16803c}
+.pill.fail{background:#fde8ea;color:#b00020}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left;white-space:nowrap}
+th{background:#667eea;color:white}
+.logout{float:right;background:#fff;color:#667eea;padding:7px 12px}
+.hidden{display:none !important}
+@media(max-width:600px){.content{padding:18px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <button id="logoutBtn" class="logout hidden" onclick="logout()">Logout</button>
+    <h1>📋 Email Support PKT Assessment</h1>
+    <p>Professional Knowledge Test Assessment & Scoring System</p>
+  </div>
+
+  <div class="content">
+
+    <!-- LOGIN -->
+    <div id="loginScreen">
+      <div class="login-box">
+        <div id="configWarn" class="warn">This page is not connected to the response sheet yet. Paste the Web App URL into <b>BACKEND_URL</b> in the file.</div>
+        <div class="role-switch" role="tablist">
+          <button id="roleExec" class="active" onclick="setRole('executive')">Executive</button>
+          <button id="roleAdmin" onclick="setRole('admin')">Admin</button>
+        </div>
+
+        <form id="execForm" onsubmit="event.preventDefault();executiveLogin()">
+          <div class="notice">Enter your details to start. The assessment can be submitted <b>only once</b> per email address.</div>
+          <div class="form-group">
+            <label for="execName">Full Name *</label>
+            <input id="execName" type="text" autocomplete="name" placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label for="execEmail">Email *</label>
+            <input id="execEmail" type="email" autocomplete="email" placeholder="Enter your email">
+          </div>
+          <div class="form-group">
+            <label for="execDate">Date *</label>
+            <input id="execDate" type="date">
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%">Start Assessment</button>
+        </form>
+
+        <form id="adminForm" class="hidden" onsubmit="event.preventDefault();adminLogin()">
+          <div class="form-group">
+            <label for="loginUser">Username</label>
+            <input id="loginUser" type="text" autocomplete="username" placeholder="Enter username">
+          </div>
+          <div class="form-group">
+            <label for="loginPass">Password</label>
+            <input id="loginPass" type="password" autocomplete="current-password" placeholder="Enter password">
+          </div>
+          <button id="adminBtn" type="submit" class="btn-primary" style="width:100%">Admin Login</button>
+        </form>
+
+        <div id="loginError" class="error" role="alert"></div>
+      </div>
+    </div>
+
+    <!-- EXECUTIVE VIEW: assessment only -->
+    <div id="execApp" class="app">
+      <div id="statusBox" class="statusbox hidden">
+        <p id="statusMsg">Checking your submission status…</p>
+        <button id="retryBtn" class="btn-primary hidden" onclick="showExecutive(getSession())">Try again</button>
+      </div>
+
+      <div id="lockedBox" class="locked hidden">
+        <h2>Assessment already submitted</h2>
+        <p id="lockedMsg"></p>
+      </div>
+
+      <section id="assessment" class="hidden">
+        <h2 style="margin-bottom:6px">Assessment Questions</h2>
+        <p id="execWho" style="color:#666;margin-bottom:18px"></p>
+        <div class="progress"><div id="progressFill" class="fill"></div></div>
+        <div id="questionsContainer"></div>
+        <div class="actions">
+          <button id="submitBtn" class="btn-primary" onclick="submitAssessment()">Submit Assessment</button>
+        </div>
+      </section>
+
+      <div id="result" class="result">
+        <h2 style="margin-bottom:6px">Thank you, your response is submitted</h2>
+        <div id="finalScore" class="score">0/0</div>
+        <div id="scorePercentage" style="font-size:20px">0%</div>
+        <div id="resultDetails"></div>
+        <div class="answer-review">
+          <h3>Question &amp; Answer Review</h3>
+          <div id="answerReview"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN VIEW: live response sheet only -->
+    <div id="adminApp" class="app">
+      <div class="admin-bar">
+        <div>
+          <h2>Response Sheet</h2>
+          <div class="live"><span id="liveDot" class="dot"></span><span id="liveText">Connecting…</span></div>
+        </div>
+        <div class="admin-actions">
+          <button class="btn-secondary" onclick="refreshResults()">Refresh now</button>
+          <button class="btn-success" onclick="downloadExcel()">Download Excel (.xlsx)</button>
+        </div>
+      </div>
+      <div id="adminStats" class="stats"></div>
+      <div id="historyContent" class="table-wrap"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SheetJS for real .xlsx export. If it fails to load, the export falls back to CSV. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ------------------------------------------------------------------
+// Paste the Web App URL from Google Apps Script here (ends with /exec).
+// The admin username/password are now stored in the Apps Script, not here.
+// ------------------------------------------------------------------
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbw48oGuFkRIzEjBxLxDInoH1JmmIKkjAmTyXprJjT7IYakbktZnYAqY5zFoZKypaXqrDw/exec";
+const PASS_PERCENT = 80;               // pass mark: 80% or above (40 out of 50 points)
+const POINTS_PER_Q = 2;                // each correct answer = 2 points (25 questions = 50 points)
+const POLL_MS = 10000;                 // admin view refreshes every 10 seconds
+
+const SESSION_KEY = "pktSession";
+
+const questions = [
+  { id: 1, question: "What should an executive do when a ticket is in the Queued stage?",
+    options: [
+      { text: "Immediately resolve it", correct: false },
+      { text: "Reply to the customer", correct: false },
+      { text: "Leave the ticket untouched until it is assigned", correct: true },
+      { text: "Merge it with another ticket", correct: false } ] },
+  { id: 2, question: "Which group handles CIBIL/CIC-related tickets?",
+    options: [
+      { text: "Service", correct: false },
+      { text: "Complaint", correct: false },
+      { text: "MIS", correct: true },
+      { text: "Collections", correct: false } ] },
+  { id: 3, question: "If a complaint is not resolved satisfactorily at Level 1, where can it be escalated?",
+    options: [
+      { text: "Nodal Officer", correct: false },
+      { text: "Reserve Bank of India", correct: false },
+      { text: "Grievance Redressal Officer", correct: true },
+      { text: "Credit Review Team", correct: false } ] },
+  { id: 4, question: "When can a customer approach the RBI regarding an unresolved complaint, as mentioned in the PPT?",
+    options: [
+      { text: "Within 24 hours", correct: false },
+      { text: "Within 7 days", correct: false },
+      { text: "If unresolved within 30 days", correct: true },
+      { text: "After 90 days", correct: false } ] },
+  { id: 5, question: "During which hours are KYC verification calls conducted by the Credit Review Team?",
+    options: [
+      { text: "8 AM to 6 PM", correct: false },
+      { text: "9 AM to 9 PM", correct: true },
+      { text: "10 AM to 5 PM", correct: false },
+      { text: "24 hours", correct: false } ] },
+  { id: 6, question: "Can a customer's personal details be modified while an active loan is ongoing?",
+    options: [
+      { text: "Yes, at any time", correct: false },
+      { text: "Only through the app", correct: false },
+      { text: "No, modification is allowed after the loan is fully repaid and closed", correct: true },
+      { text: "Only through email", correct: false } ] },
+  { id: 7, question: "Which document can be provided as proof for bank account modification?", fixed: true,
+    options: [
+      { text: "Cancelled cheque", correct: false },
+      { text: "Passbook", correct: false },
+      { text: "Bank statement", correct: false },
+      { text: "All of the above", correct: true } ] },
+  { id: 8, question: "What is the annual ROI for 120 day loan products?",
+    options: [
+      { text: "18%", correct: false },
+      { text: "21.90%", correct: false },
+      { text: "25%", correct: false },
+      { text: "35.04%", correct: true } ] },
+  { id: 9, question: "What happens to the interest calculation if a customer makes a payment one day before the due date?",
+    options: [
+      { text: "One additional day's interest is charged", correct: false },
+      { text: "One day's interest is reduced", correct: true },
+      { text: "Full interest is waived", correct: false },
+      { text: "No change is made", correct: false } ] },
+  { id: 10, question: "Within how many days must a customer complete the OTP-based loan agreement after approval?",
+    options: [
+      { text: "2 days", correct: false },
+      { text: "5 days", correct: false },
+      { text: "7 days", correct: true },
+      { text: "15 days", correct: false } ] },
+  { id: 11, question: "What should an executive do if a payment shows as failed but the amount has been debited?",
+    options: [
+      { text: "Immediately promise a refund", correct: false },
+      { text: "Verify the transaction status with the TL through Easebuzz", correct: true },
+      { text: "Ask the customer to pay again", correct: false },
+      { text: "Close the query without checking", correct: false } ] },
+  { id: 12, question: "What is the expected refund timeline for a failed payment where the amount was debited, subject to the payment provider's process?",
+    options: [
+      { text: "24 hours", correct: false },
+      { text: "2–3 working days", correct: false },
+      { text: "5–7 working days", correct: true },
+      { text: "30 days", correct: false } ] },
+  { id: 13, question: "What is the cooling period following loan disbursement?",
+    options: [
+      { text: "12 hours", correct: false },
+      { text: "24 hours", correct: true },
+      { text: "48 hours", correct: false },
+      { text: "7 days", correct: false } ] },
+  { id: 14, question: "What does a ticket represent in DevRev?",
+    options: [
+      { text: "A customer's loan application", correct: false },
+      { text: "A customer's email interaction", correct: true },
+      { text: "An employee attendance record", correct: false },
+      { text: "A payment receipt", correct: false } ] },
+  { id: 15, question: "What should an executive check before replying to a customer?",
+    options: [
+      { text: "Only the ticket number", correct: false },
+      { text: "Customer profile and available details", correct: true },
+      { text: "Other executives' attendance", correct: false },
+      { text: "Only the ticket priority", correct: false } ] },
+  { id: 16, question: "Which option is used to communicate directly with the customer?",
+    options: [
+      { text: "Internal Discussions", correct: false },
+      { text: "Customer Message", correct: true },
+      { text: "Events", correct: false },
+      { text: "Attributes", correct: false } ] },
+  { id: 17, question: "What is the purpose of Internal Discussions?",
+    options: [
+      { text: "To send messages directly to customers", correct: false },
+      { text: "To record internal notes and communicate with colleagues", correct: true },
+      { text: "To send payment links", correct: false },
+      { text: "To close tickets automatically", correct: false } ] },
+  { id: 18, question: "What is the purpose of the Events section?",
+    options: [
+      { text: "To view the ticket's activity and update history", correct: true },
+      { text: "To send a new email", correct: false },
+      { text: "To update the customer's PAN", correct: false },
+      { text: "To calculate loan interest", correct: false } ] },
+  { id: 19, question: "Which symbol is used to access templates in the ticket body, as explained in the training notes?",
+    options: [
+      { text: "@", correct: false },
+      { text: "#", correct: false },
+      { text: "/", correct: true },
+      { text: "&", correct: false } ] },
+  { id: 20, question: "What is the purpose of merging tickets?",
+    options: [
+      { text: "To combine duplicate tickets related to the same customer concern", correct: true },
+      { text: "To delete customer information", correct: false },
+      { text: "To change the ticket category", correct: false },
+      { text: "To assign tickets to multiple executives", correct: false } ] },
+  { id: 21, question: "A ₹16,800 loan has a 90-day tenure. What is the interest for one 30-day period?",
+    options: [
+      { text: "₹302.40", correct: true },
+      { text: "₹604.80", correct: false },
+      { text: "₹1,209.60", correct: false },
+      { text: "₹483.84", correct: false } ] },
+  { id: 22, question: "What is the expected refund timeline for a failed payment where the amount was debited, subject to the payment provider's process?",
+    options: [
+      { text: "24 hours", correct: false },
+      { text: "2–3 working days", correct: false },
+      { text: "5–7 working days", correct: true },
+      { text: "30 days", correct: false } ] },
+  { id: 23, question: "A customer borrows ₹2,000. The upfront rate is 5%. What amount should be entered as the upfront amount before GST?",
+    options: [
+      { text: "₹90", correct: false },
+      { text: "₹100", correct: true },
+      { text: "₹118", correct: false },
+      { text: "₹120", correct: false } ] },
+  { id: 24, question: "The upfront amount is ₹2,418. What is the GST at 18%?",
+    options: [
+      { text: "₹435.24", correct: true },
+      { text: "₹418.24", correct: false },
+      { text: "₹453.24", correct: false },
+      { text: "₹483.60", correct: false } ] },
+  { id: 25, question: "When merging duplicate tickets, which ticket should be selected as the primary ticket according to the training notes?",
+    options: [
+      { text: "Newest ticket", correct: false },
+      { text: "Older ticket", correct: true },
+      { text: "Ticket with the highest priority only", correct: false },
+      { text: "Ticket with the shortest description", correct: false } ] }
+];
+
+let pollTimer = null;
+let refreshing = false;
+let lastResults = [];
+
+// ------------------------------ server calls ------------------------------
+function isConfigured() { return BACKEND_URL && !BACKEND_URL.startsWith("PASTE"); }
+
+async function api(payload) {
+  if (!isConfigured()) throw new Error("NOT_CONFIGURED");
+  const res = await fetch(BACKEND_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },   // avoids CORS preflight
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  try { return await res.json(); }
+  catch (e) { throw new Error("BAD_RESPONSE"); }
+}
+function friendlyError(e) {
+  const msg = (e && e.message) || "";
+  if (msg === "NOT_CONFIGURED") return "This page is not connected to the response sheet yet.";
+  // Network problem, or the script is not deployed with access set to "Anyone".
+  if ((e && e.name === "TypeError") || msg.startsWith("HTTP") || msg === "BAD_RESPONSE")
+    return "Could not reach the response sheet. Check your internet connection. If this keeps happening, the Google script may not be deployed with access set to Anyone.";
+  // Error reported by the script itself (for example, not attached to a sheet).
+  return "The response sheet reported a problem: " + msg;
+}
+
+// ------------------------------ session helpers ------------------------------
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); }
+  catch (e) { return null; }
+}
+function setSession(obj) { try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj)); } catch (e) {} }
+function clearSession() { try { sessionStorage.removeItem(SESSION_KEY); sessionStorage.removeItem("pktPaper"); } catch (e) {} }
+
+function isPass(r) { return Number(r.percentage) >= PASS_PERCENT; }
+function normEmail(e) { return String(e || "").trim().toLowerCase(); }
+function pts(n) { return Number(n || 0) * POINTS_PER_Q; }   // correct-answer count -> points
+function formatDate(iso) {           // "2026-09-19" -> "19-09-2026" (already-formatted values pass through)
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : (iso || "");
+}
+
+// ------------------------------ startup ------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  if (!isConfigured()) document.getElementById("configWarn").style.display = "block";
+  const s = getSession();
+  if (s && s.role === "admin") showAdmin();
+  else if (s && s.role === "executive") showExecutive(s);
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && pollTimer) refreshResults();
+});
+
+function setRole(role) {
+  const admin = role === "admin";
+  document.getElementById("roleAdmin").classList.toggle("active", admin);
+  document.getElementById("roleExec").classList.toggle("active", !admin);
+  document.getElementById("adminForm").classList.toggle("hidden", !admin);
+  document.getElementById("execForm").classList.toggle("hidden", admin);
+  showError("");
+}
+function showError(msg) {
+  const el = document.getElementById("loginError");
+  el.textContent = msg;
+  el.style.display = msg ? "block" : "none";
+}
+function enterApp(id) {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("execApp").style.display = id === "execApp" ? "block" : "none";
+  document.getElementById("adminApp").style.display = id === "adminApp" ? "block" : "none";
+  document.getElementById("logoutBtn").classList.remove("hidden");
+}
+
+// ------------------------------ logins ------------------------------
+async function adminLogin() {
+  const username = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value;
+  const btn = document.getElementById("adminBtn");
+  btn.disabled = true; btn.textContent = "Signing in…";
+  try {
+    const res = await api({ action: "list", username, password });
+    if (!res.ok) {
+      showError(res.error === "unauthorized" ? "Invalid username or password." : (res.error || "Login failed."));
+      return;
+    }
+    showError("");
+    setSession({ role: "admin", username, password });
+    lastResults = res.results || [];
+    enterApp("adminApp");
+    renderResponseSheet();
+    setLive("ok");
+    startPolling();
+  } catch (e) {
+    showError(friendlyError(e));
+  } finally {
+    btn.disabled = false; btn.textContent = "Admin Login";
+  }
+}
+
+function executiveLogin() {
+  const name = document.getElementById("execName").value.trim();
+  const email = normEmail(document.getElementById("execEmail").value);
+  const date = document.getElementById("execDate").value;
+  if (!name) return showError("Please enter your full name.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError("Please enter a valid email address.");
+  if (!date) return showError("Please select the date.");
+  showError("");
+  const session = { role: "executive", name, email, date };
+  setSession(session);
+  showExecutive(session);
+}
+
+function logout() {
+  stopPolling();
+  clearSession();
+  lastResults = [];
+  ["execApp", "adminApp"].forEach(id => document.getElementById(id).style.display = "none");
+  document.getElementById("logoutBtn").classList.add("hidden");
+  document.getElementById("loginScreen").style.display = "block";
+  ["execName", "execEmail", "execDate", "loginPass"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("result").style.display = "none";
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("submitBtn").textContent = "Submit Assessment";
+}
+
+// ------------------------------ admin: live response sheet ------------------------------
+async function showAdmin() {
+  const s = getSession();
+  if (!s || s.role !== "admin") return;
+  enterApp("adminApp");
+  setLive("loading");
+  await refreshResults();
+  startPolling();
+}
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(refreshResults, POLL_MS);
+}
+function stopPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = null;
+}
+async function refreshResults() {
+  const s = getSession();
+  if (!s || s.role !== "admin" || refreshing) return;
+  refreshing = true;
+  try {
+    const res = await api({ action: "list", username: s.username, password: s.password });
+    if (!res.ok) {
+      if (res.error === "unauthorized") return logout();
+      throw new Error(res.error || "Server error");
+    }
+    lastResults = res.results || [];
+    renderResponseSheet();
+    setLive("ok");
+  } catch (e) {
+    setLive("error");
+  } finally {
+    refreshing = false;
+  }
+}
+function setLive(state) {
+  const dot = document.getElementById("liveDot");
+  const txt = document.getElementById("liveText");
+  dot.className = "dot " + state;
+  if (state === "ok") txt.textContent = "Live, last updated " + new Date().toLocaleTimeString();
+  else if (state === "error") txt.textContent = "Connection problem, retrying…";
+  else txt.textContent = "Loading…";
+}
+
+function renderResponseSheet() {
+  const results = lastResults;
+  const box = document.getElementById("historyContent");
+  const stats = document.getElementById("adminStats");
+
+  if (!results.length) {
+    stats.innerHTML = "";
+    box.innerHTML = '<p style="padding:20px;color:#777">No responses submitted yet.</p>';
+    return;
+  }
+  const avg = Math.round(results.reduce((t, r) => t + r.percentage, 0) / results.length);
+  const passed = results.filter(isPass).length;
+  const failed = results.length - passed;
+  stats.innerHTML = `
+    <div class="stat"><b>${results.length}</b>Responses</div>
+    <div class="stat pass"><b>${passed}</b>Passed (${PASS_PERCENT}%+)</div>
+    <div class="stat fail"><b>${failed}</b>Failed (below ${PASS_PERCENT}%)</div>
+    <div class="stat"><b>${avg}%</b>Average score</div>
+    <div class="stat"><b>${Math.max(...results.map(r => r.percentage))}%</b>Highest score</div>`;
+
+  box.innerHTML = `<table>
+    <thead><tr><th>#</th><th>Executive</th><th>Email</th><th>Date</th><th>Score</th><th>Percentage</th><th>Result</th><th>Submitted</th></tr></thead>
+    <tbody>
+      ${results.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(r.executiveName)}</td>
+          <td>${escapeHtml(r.executiveEmail || "-")}</td>
+          <td>${escapeHtml(formatDate(r.assessmentDate) || "-")}</td>
+          <td>${pts(r.score)}/${pts(r.totalQuestions)}</td>
+          <td>${r.percentage}%</td>
+          <td><span class="pill ${isPass(r) ? "pass" : "fail"}">${isPass(r) ? "Pass" : "Fail"}</span></td>
+          <td>${escapeHtml(r.date)}</td>
+        </tr>`).join("")}
+    </tbody>
+  </table>`;
+}
+
+// ------------------------------ executive view ------------------------------
+function showStatus(msg, withRetry) {
+  document.getElementById("statusBox").classList.remove("hidden");
+  document.getElementById("statusMsg").textContent = msg;
+  document.getElementById("retryBtn").classList.toggle("hidden", !withRetry);
+}
+
+async function showExecutive(session) {
+  if (!session || session.role !== "executive") return;
+  enterApp("execApp");
+  document.getElementById("execWho").textContent =
+    `${session.name} | ${session.email} | Date: ${formatDate(session.date)}`;
+  document.getElementById("lockedBox").classList.add("hidden");
+  document.getElementById("assessment").classList.add("hidden");
+  document.getElementById("result").style.display = "none";
+  showStatus("Checking your submission status…", false);
+
+  try {
+    const res = await api({ action: "check", employeeId: session.email, email: session.email });
+    if (!res.ok) throw new Error(res.error || "Server error");
+    document.getElementById("statusBox").classList.add("hidden");
+    if (res.exists) return showLocked(res.existing);
+    document.getElementById("assessment").classList.remove("hidden");
+    renderQuestions();
+    updateProgress();
+  } catch (e) {
+    showStatus(friendlyError(e), true);
+  }
+}
+
+function showLocked(existing) {
+  document.getElementById("statusBox").classList.add("hidden");
+  document.getElementById("assessment").classList.add("hidden");
+  document.getElementById("result").style.display = "none";
+  document.getElementById("lockedBox").classList.remove("hidden");
+  document.getElementById("lockedMsg").textContent =
+    `A response for this email address was already submitted on ${existing.submittedOn || "an earlier date"}. Multiple submissions are not allowed.`;
+}
+
+// ------------------------------ per-executive shuffling ------------------------------
+// Every executive gets their own random question order AND option order.
+// The shuffle is saved for the browser session so a page refresh does not change the paper.
+const PAPER_KEY = "pktPaper";
+let paper = [];                       // [{ q, options:[{text, correct}] }] in the order shown on screen
+
+function randInt(n) {                 // unbiased random integer in [0, n)
+  if (window.crypto && crypto.getRandomValues) {
+    const max = Math.floor(4294967296 / n) * n, buf = new Uint32Array(1);
+    do { crypto.getRandomValues(buf); } while (buf[0] >= max);
+    return buf[0] % n;
+  }
+  return Math.floor(Math.random() * n);
+}
+function shuffled(arr) {              // Fisher-Yates
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function buildPaper(empId) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(PAPER_KEY) || "null");
+    if (saved && saved.empId === empId && saved.order.length === questions.length) {
+      const rebuilt = saved.order.map(id => {
+        const q = questions.find(x => x.id === id);
+        return q && { q, options: saved.opts[id].map(i => q.options[i]) };
+      });
+      if (rebuilt.every(Boolean)) return rebuilt;
+    }
+  } catch (e) {}
+  const order = shuffled(questions.map((_, i) => i));
+  const built = order.map(qi => {
+    const q = questions[qi];
+    const idx = q.options.map((_, i) => i);
+    return { q, optIdx: q.fixed ? idx : shuffled(idx) };   // 'fixed' keeps options like "All of the above" in place
+  });
+  try {
+    const opts = {};
+    built.forEach(b => opts[b.q.id] = b.optIdx);
+    sessionStorage.setItem(PAPER_KEY, JSON.stringify({ empId, order: built.map(b => b.q.id), opts }));
+  } catch (e) {}
+  return built.map(b => ({ q: b.q, options: b.optIdx.map(i => b.q.options[i]) }));
+}
+
+function renderQuestions() {
+  const s = getSession();
+  paper = buildPaper(s ? s.email : "");
+  document.getElementById("questionsContainer").innerHTML = paper.map((p, n) => `
+    <div class="question">
+      <div class="qnum">Question ${n + 1}</div>
+      <div class="qtext">${escapeHtml(p.q.question)}</div>
+      <div>
+        ${p.options.map((opt, idx) => `
+          <label class="option">
+            <input type="radio" name="question${p.q.id}" value="${idx}" onchange="updateProgress()">
+            <span>${escapeHtml(opt.text)}</span>
+          </label>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+function updateProgress() {
+  const answered = paper.filter(p => document.querySelector(`input[name="question${p.q.id}"]:checked`)).length;
+  document.getElementById("progressFill").style.width = (answered / (paper.length || 1) * 100) + "%";
+}
+
+async function submitAssessment() {
+  const session = getSession();
+  if (!session || session.role !== "executive") return;
+
+  const answers = [];
+  for (const p of paper) {
+    const q = p.q;
+    const selected = document.querySelector(`input[name="question${q.id}"]:checked`);
+    if (!selected) {
+      alert(`Please answer all ${paper.length} questions before submitting.`);
+      return;
+    }
+    const idx = Number(selected.value);
+    answers.push({
+      questionId: q.id,
+      question: q.question,
+      selectedAnswer: p.options[idx].text,
+      correctAnswer: p.options.find(o => o.correct)?.text || "",
+      isCorrect: !!p.options[idx].correct,
+      points: p.options[idx].correct ? POINTS_PER_Q : 0
+    });
+  }
+
+  if (!confirm("Submit your assessment? You will not be able to submit again.")) return;
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true; btn.textContent = "Submitting…";     // blocks double-clicks
+
+  try {
+    const res = await api({
+      action: "submit",
+      name: session.name, employeeId: session.email, email: session.email,
+      tl: "", assessmentDate: session.date, answers,
+      pointsPerQuestion: POINTS_PER_Q, scorePoints: answers.filter(a => a.isCorrect).length * POINTS_PER_Q,
+      totalPoints: answers.length * POINTS_PER_Q
+    });
+    if (res.duplicate) return showLocked(res.existing);
+    if (!res.ok) throw new Error(res.error || "Server error");
+
+    const correct = answers.filter(a => a.isCorrect).length;
+    showResult({
+      score: correct * POINTS_PER_Q, total: answers.length * POINTS_PER_Q,
+      percentage: Math.round(correct / answers.length * 100),
+      name: session.name, email: session.email,
+      date: session.date, submittedOn: res.submittedOn, answers
+    });
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Submit Assessment";
+    alert(friendlyError(e) + " Your answers are still on the screen, so you can try again.");
+  }
+}
+
+function showResult(r) {
+  document.getElementById("assessment").classList.add("hidden");
+  document.getElementById("finalScore").textContent = `${r.score}/${r.total}`;
+  document.getElementById("scorePercentage").textContent = `${r.percentage}%`;
+  document.getElementById("resultDetails").innerHTML = `
+    <div class="review">
+      <b>Executive:</b> ${escapeHtml(r.name)}<br>
+      <b>Email:</b> ${escapeHtml(r.email)}<br>
+      <b>Date:</b> ${escapeHtml(formatDate(r.date))}<br>
+      <b>Submitted:</b> ${escapeHtml(r.submittedOn || "")}
+    </div>`;
+  document.getElementById("answerReview").innerHTML = r.answers.map((a, i) => `
+    <div class="qa ${a.isCorrect ? "correct" : "wrong"}">
+      <b>Q${i + 1}. ${escapeHtml(a.question)}</b><br>
+      <span class="yours ${a.isCorrect ? "right-text" : "wrong-text"}">Your answer: ${escapeHtml(a.selectedAnswer)}</span><br>
+      <span class="key">Correct answer: ${escapeHtml(a.correctAnswer)}</span><br>
+      <span class="${a.isCorrect ? "badge-ok" : "badge-no"}">${a.isCorrect ? "✓ Correct" : "✗ Incorrect"}</span>
+    </div>`).join("");
+  document.getElementById("result").style.display = "block";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ------------------------------ Excel export ------------------------------
+function downloadExcel() {
+  const s = getSession();
+  if (!s || s.role !== "admin") return;
+  const results = lastResults;
+  if (!results.length) return alert("No responses to download.");
+
+  const summaryHeader = ["S.No", "Executive Name", "Email", "Date", "Score (Points)", "Total Points", "Percentage", "Result", "Submitted On"];
+  const summary = results.map((r, i) => [i + 1, r.executiveName, r.executiveEmail || "", formatDate(r.assessmentDate), pts(r.score), pts(r.totalQuestions), r.percentage + "%", isPass(r) ? "Pass" : "Fail", r.date]);
+
+  const detailHeader = ["Executive Name", "Email", "Date", "Question No", "Question", "Selected Answer", "Correct Answer", "Result", "Points"];
+  const detail = [];
+  results.forEach(r => (r.answers || []).forEach(a => detail.push([
+    r.executiveName, r.executiveEmail || "", formatDate(r.assessmentDate),
+    a.questionId, a.question, a.selectedAnswer, a.correctAnswer, a.isCorrect ? "Correct" : "Incorrect", a.isCorrect ? POINTS_PER_Q : 0
+  ])));
+
+  // Fallback if SheetJS could not load (offline): plain CSV of the summary.
+  if (typeof XLSX === "undefined") {
+    const csv = [summaryHeader, ...summary].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = "PKT_Assessment_Responses.csv"; a.click();
+    URL.revokeObjectURL(url);
+    return alert("Excel library could not load (check your internet connection), so a CSV was downloaded instead.");
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet([summaryHeader, ...summary]);
+  ws1["!cols"] = [{ wch: 6 }, { wch: 26 }, { wch: 32 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, ws1, "Responses");
+  const ws2 = XLSX.utils.aoa_to_sheet([detailHeader, ...detail]);
+  ws2["!cols"] = [{ wch: 26 }, { wch: 32 }, { wch: 12 }, { wch: 12 }, { wch: 70 }, { wch: 50 }, { wch: 50 }, { wch: 11 }, { wch: 8 }];
+  XLSX.utils.book_append_sheet(wb, ws2, "Detailed Answers");
+  XLSX.writeFile(wb, "PKT_Assessment_Responses.xlsx");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+</script>
+</body>
+</html>
